@@ -15,7 +15,14 @@ class EventController extends Controller
      */
     public function index()
     {
+        $this->shouldBeIncluded();
         return EventResource::collection(Event::with('user')->paginate());
+    }
+
+    protected function shouldBeIncluded()
+    {
+        $include = request()->query('include');
+        return $include;
     }
 
     /**

@@ -16,10 +16,13 @@ class AttendeeController extends Controller
      * Display a listing of the resource.
      */
 
-
+    public function __construct()
+    {
+        $this->middleware('auth:sanctum')->except(['index', 'show']);
+    }
     public function index(Event $event)
     {
-        $query = Event::query();
+        $query = Attendee::query();
         $relations = ['attendees', 'attendees.user'];
         // $attendees = $event->attendees()->latest();
 
@@ -79,6 +82,7 @@ class AttendeeController extends Controller
      */
     public function destroy(Event $event, Attendee $attendee)
     {
+        $this->authorize('delete-attendee', [$event, $attendee]);
         $attendee->delete();
         return response(status: 204);
     }

@@ -4,19 +4,46 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Http\Resources\AttendeeResource;
+use App\Http\Traits\CanLoadAttendees;
 use App\Models\Attendee;
 use App\Models\Event;
 use Illuminate\Http\Request;
 
 class AttendeeController extends Controller
 {
+    use CanLoadAttendees;
     /**
      * Display a listing of the resource.
      */
+
+
     public function index(Event $event)
     {
-        $attendees = $event->attendees()->latest();
-        return AttendeeResource::collection($attendees->paginate());
+        $query = Event::query();
+        $relations = ['attendees', 'attendees.user'];
+        // $attendees = $event->attendees()->latest();
+
+        foreach ($relations as $relation) {
+            $query->when(
+                $this->shouldInclude($relation),
+                fn($q) => $q->with($relation)
+            );
+        }
+        // $query = $this->loadAttendeesRelation($attendees, ['attendees,attendees.user']);
+        return AttendeeResource::collection($query->latest()->paginate());
+    }
+
+    function shouldInclude($relation)
+    {
+        $includes = request()->query('include', '');
+        if (!$includes) {
+            return false;
+        }
+
+        $relations = array_map('trim', explode(',', $includes));
+
+
+        return in_array($relation, $relations);
     }
 
     /**
